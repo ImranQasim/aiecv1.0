@@ -155,7 +155,9 @@ Why is OAuth important for MCP servers, and what security considerations should 
 
 #### Answer
 
-_(insert your answer here)_
+OAuth matters once your server is public. Anyone with the ngrok URL can hit it unless something checks who they are first. I saw this firsthand. Claude Desktop had to sign in before any tool calls worked. Without that, someone could add stuff to a cart or run checkout with zero identity check.
+The real issue I hit was the issuer URL. I started the server once pointing at localhost instead of my actual ngrok address. The OAuth endpoint kept saying the issuer was localhost even though Claude was hitting ngrok. Tokens got minted for one address and checked against another, so nothing matched and the connector kept failing.
+Main things to watch for: scope tokens narrowly (read vs write), check tokens on every call not just at login, and never let tokens end up in logs or git. Also since free ngrok URLs change every restart, I have to update the issuer and reconnect each time. Easy to forget, and that's a real risk.
 
 ### Question #2
 
@@ -163,7 +165,8 @@ What is Streamable HTTP transport in MCP, and why might you expose a server publ
 
 #### Answer
 
-_(insert your answer here)_
+Streamable HTTP is one HTTP endpoint that handles JSON-RPC requests over POST, and can stream back a response when it needs to. It replaced an older setup with two separate endpoints, which made it harder to run behind normal infra like load balancers.
+I needed this because stdio only works when client and server are on the same machine, talking through a direct process pipe. My server and Claude Desktop are technically both on my laptop, but the assignment wants it set up like a real remote server, so I ran it through ngrok. Once it's public like that, stdio is off the table. Streamable HTTP is what lets it be reached from anywhere, and OAuth is what stops "reachable from anywhere" from meaning "open to anyone." I confirmed this isn't just theory either, since the connector flat out refused to work until sign-in actually succeeded.
 
 ## Activity 1: Extend the MCP Server
 
