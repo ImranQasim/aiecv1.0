@@ -177,3 +177,7 @@ Add at least one new tool to the cat shop MCP server (e.g., `search_products`, `
 Build a custom MCP client that connects to the cat shop server over Streamable HTTP, authenticates via OAuth, and orchestrates a multi-step shopping flow (browse → add to cart → checkout). Compare the developer experience of MCP-based tool integration vs. traditional REST API calls.
 
 Include your findings and a demo in your Loom video.
+
+### Findings
+With MCP, I never had to write a single tool definition by hand. My client called mcp_client.get_tools() and got back all 7 tools, fully described, including the search_products tool I added on the server side last week. I didn't touch the client code to make that new tool available. The agent just had it.
+With REST, equivalent functionality means writing one function per endpoint, manually documenting the request shape, the response shape, and the URL pattern for each one. If I want an LLM agent to use this REST API instead of calling it directly in code, I then have to hand-translate every function into a separate tool definition the LLM can understand, describing parameters and return types myself. That's real work, and it's brittle. If the API team renames a field or adds a new endpoint, my hardcoded client breaks silently or stays unaware of the new capability until I update it myself.
