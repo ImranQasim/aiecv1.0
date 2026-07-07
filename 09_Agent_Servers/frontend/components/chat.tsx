@@ -21,7 +21,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { getMessageText, toolLabel } from "@/lib/messages";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+// The SDK needs an absolute URL, so resolve a relative "/api" against the current origin.
+function resolveApiUrl() {
+  const raw = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+  if (/^https?:\/\//.test(raw)) return raw;
+  if (typeof window !== "undefined") return new URL(raw, window.location.origin).toString();
+  return raw;
+}
 
 type StreamMessage = ReturnType<typeof useStream>["messages"][number];
 
@@ -38,7 +44,7 @@ function toolIcon(name?: string) {
 }
 
 export function Chat({ assistantId }: { assistantId: string }) {
-  const stream = useStream({ apiUrl: API_URL, assistantId });
+  const stream = useStream({ apiUrl: resolveApiUrl(), assistantId });
   const { messages, isLoading, error } = stream;
 
   const [input, setInput] = useState("");
