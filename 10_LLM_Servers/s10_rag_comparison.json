@@ -1,0 +1,22 @@
+{
+  "fireworks": {
+    "scores": {
+      "faithfulness": 0.7857142857142857,
+      "answer_relevancy": 0.7468061111600334,
+      "context_precision": 0.7222222221777778,
+      "context_recall": 0.8333333333333334
+    },
+    "cost_per_query_usd": 0.00025869166666666666,
+    "tokens": 17222
+  },
+  "openai": {
+    "scores": {
+      "faithfulness": 0.8333333333333334,
+      "answer_relevancy": 0.761007844543928,
+      "context_precision": 0.7638888888423612,
+      "context_recall": 0.8333333333333334
+    },
+    "cost_per_query_usd": 0.0012105333333333336,
+    "tokens": 17399
+  }
+}

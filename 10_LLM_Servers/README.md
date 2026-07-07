@@ -83,7 +83,9 @@ What is the difference between serverless and dedicated endpoints?
 
 #### ✅ Answer:
 
-_(insert your answer here)_
+Serverless endpoints are shared infrastructure that Fireworks already runs. You call the model by its identifier and pay per token, nothing when idle. You never manage or provision GPUs. The tradeoff is that you share capacity with everyone else hitting the same pool, so under heavy or bursty load you can hit queueing, rate limits, or cold responses.
+Dedicated endpoints are GPUs provisioned for you alone. You get guaranteed capacity and consistent latency because no one else is competing for the hardware. The tradeoff is cost: you pay by the hour whether or not the endpoint is being used, which is why Fireworks warns you to configure auto-shutdown or delete the deployment when done.
+For this assignment I used serverless, which is the correct instinct for a low-traffic homework workload. A production system with steady load and strict latency requirements, especially in a regulated setting, is where dedicated earns its cost.
 
 ### ❓ Question #2:
 
@@ -91,13 +93,36 @@ Why is it important to consider token throughput and latency when choosing an LL
 
 #### ✅ Answer:
 
-_(insert your answer here)_
+Latency is how long a single request takes, which is what one user feels while waiting for a reply. Throughput is how many requests or tokens the system handles per second across all users, which is what determines whether the app survives under concurrent load. They're different numbers and you need both.
+I saw this directly. A single request returned quickly, but firing 24 concurrent requests at the serverless endpoint took 29.89 seconds for all 24 to complete, with zero failures. That tells me the endpoint handled the burst without dropping requests, but the per-request time under concurrency was higher than a single isolated call, because shared serverless capacity queues work under load.
+For a user-facing app this matters because good latency for one user doesn't guarantee the app holds up when many users arrive at once. If throughput is weak, real users experience slow or timed-out responses at peak. The only honest way to know your ceiling is to measure it on a realistic load, which is exactly what the slam test does, rather than guessing from a single request.
 
 ## Activity 1: RAGAS Evaluation with Cost Analysis
 
 Use RAGAS to evaluate your open-source Fireworks AI powered RAG app against an OpenAI `gpt-4.1-mini` powered equivalent. Compare retrieval quality, answer faithfulness, and end-to-end accuracy across both providers.
 
 Additionally, instrument both pipelines with **LangSmith** to capture token usage and cost per query. Use LangSmith's tracing and cost dashboards to compare the total cost of running each provider at scale. Include your evaluation results, cost breakdown, and analysis in your Loom video.
+
+## Notes
+I compared an open RAG (Fireworks gpt-oss-20b with Qwen3-Embedding-8B) against a closed RAG (OpenAI gpt-4.1-mini with text-embedding-3-small) over the same cat health guide, using six fixed questions and gpt-4.1-mini as the RAGAS judge.
+Quality scores:
+
+Faithfulness: Fireworks 0.79, OpenAI 0.83
+Answer relevancy: Fireworks 0.75, OpenAI 0.76
+Context precision: Fireworks 0.72, OpenAI 0.76
+Context recall: Fireworks 0.83, OpenAI 0.83
+
+Cost per query, from captured token usage at published rates:
+
+Fireworks: $0.00026
+OpenAI: $0.00121
+Fireworks is 4.7x cheaper. At 1M queries that is $259 vs $1,211.
+
+What I found:
+
+OpenAI is a little better across the board, but the gap is small. The open model is competitive, not far behind. Context recall was identical because both retrieved over the same chunks.
+The cost gap comes from input tokens, not output. gpt-oss-20b was about 6x more verbose on output, but both pipelines send similar input volume, and Fireworks charges 5.7x less per input token. For RAG this makes sense: every query loads retrieved context into the prompt, so input is the big, constant cost. Output verbosity barely moved the total.
+On a question the guide does not answer (a declawing anesthesia protocol), both models correctly said "I don't know." The open model held the line on this run. One run is not proof of reliability though. Running that question 20 times and measuring the refusal rate would be the real test.
 
 ## Advanced Activity: Local Models
 
