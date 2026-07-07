@@ -428,7 +428,8 @@ Why does LangSmith deploy your agent as an API backend only, and why do you stil
 
 #### Answer
 
-_(insert your answer here)_
+The agent and the website are two different kinds of workload, and they need two different kinds of host. The agent is a long-running server. It holds a queue that runs the graph, keeps streaming connections open, and needs to stay alive between requests. The website is the opposite. It just takes a request and returns a page, then it is done.
+I learned this the hard way by trying to put the agent on Vercel first. Vercel runs everything as stateless functions that scale to zero, so they spin up for a request and shut off when traffic stops. LangGraph's own docs say not to run the agent server in that kind of environment, because scale-to-zero can drop runs and scaling up does not work right. So the agent went on Render, which keeps a process alive, and the frontend went on Vercel, which is built for exactly the stateless request-and-response work a chat UI does. One product, two workloads, two hosts. The split is not a limitation. It is the correct shape once you see that a stateful process and a stateless page are not the same job.
 
 ### Question #2
 
@@ -436,7 +437,8 @@ Why should the LangSmith API key live in a Next.js API route (server-side) inste
 
 #### Answer
 
-_(insert your answer here)_
+Anything that reaches the browser can be read by anyone who opens the dev tools. If the key sits in client code, it is not secret, it is published. So the key has to live somewhere the user never sees. The Next.js API route runs on the server, holds the key there, attaches it to the request, and forwards it to the agent. The browser talks to my own route, my route talks to the agent, and the key only ever exists on that middle hop.
+This is the same rule I already live by building mobile apps. I never ship a Supabase service key or a backend secret inside the app bundle, because anything on the client is readable. The passthrough route is that exact pattern, just with Next.js playing the backend. One honest note on my own setup: I ran the free dev server, so my key was actually empty and no secret was at risk this time. But the passthrough is built correctly for the real case, where the moment there is a paid key behind it, it stays server-side and the browser never sees it.
 
 ## Activity 1: Build a Helpfulness Loop in Production
 
