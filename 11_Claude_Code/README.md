@@ -66,7 +66,7 @@ While scaffolding in Task 3 you used **plan mode** before letting Claude Code wr
 
 #### ✅ Answer
 
-_(insert your answer here)_
+An agent that runs shell commands can take irreversible actions, so the permission system keeps a human decision between intent and execution. Plan mode matters most in an empty directory because there is no existing code to constrain the agent: every structural decision is made from nothing, and the plan is the only artifact you can review before those decisions become code. In my build, plan mode surfaced a real fork (plain async function vs a Protocol for the reply seam). Catching it in the plan cost one keypress. Catching it after implementation would have cost a refactor.
 
 ### ❓ Question #2
 
@@ -74,7 +74,7 @@ _(insert your answer here)_
 
 #### ✅ Answer
 
-_(insert your answer here)_
+CLAUDE.md holds what is durable and not discoverable from the code: run and test commands, and architectural intent, like my rule that all reply logic lives in generate_reply() and the route only delegates. What doesn't belong: anything readable from the code, prose, stale info. Every line loads into every session, so every line is a recurring context tax, the same finite-context economics as Session 3's summarization middleware. The payoff was measurable: my first SDK query() described the project accurately with zero tool calls, three messages total, because CLAUDE.md answered before any exploration was needed.
 
 ### ❓ Question #3
 
@@ -82,7 +82,9 @@ The Agent SDK gives you the same agent loop that powers Claude Code. Compare thi
 
 #### ✅ Answer
 
-_(insert your answer here)_
+The SDK collapses what I hand-built in Sessions 2 to 4 into one dependency: the loop, retries, tools, context compaction, session persistence. 
+Task 7 made the trade concrete: in LangGraph I implemented thread-scoped memory myself with a checkpointer; with the SDK I passed resume=session_id and the harness persisted everything. Same concept, but I own one and rent the other. 
+What I gave up: control of each iteration, choice of provider, custom graph topologies. It's buy vs build on the harness, decided per project.
 
 ### ❓ Question #4
 
@@ -90,7 +92,7 @@ Your chat app could have called a chat completions API directly, the way you did
 
 #### ✅ Answer
 
-_(insert your answer here)_
+A plain completion returns text. query() gives the model tools, memory, and context management, which is why my app answers with real file contents instead of plausible guesses. The new risk is that same power: a tool-wielding agent acts on the world, and on a headless server nobody clicks approve, so configuration is the gate: restricted tool surface, max_turns=25, path validation in custom tools. My build proved how easy this is to get wrong: I set allowed_tools read-only and Bash was still reachable, because allowed_tools only auto-approves while tools restricts availability. The evidence was an absent log line. Structural constraints must be verified by trace, not assumed from config.
 
 ## Activity 1: Level Up the Chat App
 
